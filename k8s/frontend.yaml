@@ -13,10 +13,12 @@ spec:
       labels:
         app: frontend
     spec:
+      imagePullSecrets:
+        - name: registry-pull-secret
       containers:
         - name: frontend
           image: ghcr.io/your-org/opspulse-frontend:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
           readinessProbe:
@@ -45,4 +47,3 @@ spec:
   ports:
     - port: 80
       targetPort: 80
-

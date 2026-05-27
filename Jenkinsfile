@@ -8,14 +8,11 @@ pipeline {
   }
 
   parameters {
-    string(name: 'REGISTRY', defaultValue: 'ghcr.io/your-org', description: 'Container registry and owner or namespace.')
-    string(name: 'IMAGE_NAMESPACE', defaultValue: 'opspulse', description: 'Image namespace or project name inside the registry.')
-    booleanParam(name: 'DEPLOY_TO_K8S', defaultValue: false, description: 'Deploy Kubernetes manifests after image build and push.')
+    string(name: 'REGISTRY', defaultValue: 'ghcr.io/YOUR_GITHUB_USERNAME', description: 'Container registry path, for example ghcr.io/your-user or docker.io/your-user.')
+    string(name: 'IMAGE_NAMESPACE', defaultValue: 'project-codex', description: 'Image namespace or project name.')
   }
 
   environment {
-    REGISTRY = "${params.REGISTRY}"
-    IMAGE_NAMESPACE = "${params.IMAGE_NAMESPACE}"
     API_IMAGE = "${params.REGISTRY}/${params.IMAGE_NAMESPACE}/opspulse-api"
     FRONTEND_IMAGE = "${params.REGISTRY}/${params.IMAGE_NAMESPACE}/opspulse-frontend"
     IMAGE_TAG = "${env.BUILD_NUMBER}"
@@ -41,12 +38,6 @@ pipeline {
       }
     }
 
-    stage('Build') {
-      steps {
-        sh 'npm run build'
-      }
-    }
-
     stage('Audit Production Dependencies') {
       steps {
         sh 'npm audit --prefix backend --omit=dev'
@@ -54,13 +45,13 @@ pipeline {
       }
     }
 
-    stage('Build Docker Images') {
-      when {
-        anyOf {
-          branch 'main'
-          branch 'main'
-        }
+    stage('Build') {
+      steps {
+        sh 'npm run build'
       }
+    }
+
+    stage('Build Docker Images') {
       steps {
         sh 'docker build -t ${API_IMAGE}:${IMAGE_TAG} -t ${API_IMAGE}:latest ./backend'
         sh 'docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} -t ${FRONTEND_IMAGE}:latest ./frontend'
@@ -68,12 +59,6 @@ pipeline {
     }
 
     stage('Push Docker Images') {
-      when {
-        anyOf {
-          branch 'main'
-          branch 'main'
-        }
-      }
       steps {
         withCredentials([usernamePassword(credentialsId: 'docker-registry-credentials', usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_PASSWORD')]) {
           sh 'echo "$REGISTRY_PASSWORD" | docker login ${REGISTRY} -u "$REGISTRY_USER" --password-stdin'
@@ -86,23 +71,22 @@ pipeline {
     }
 
     stage('Deploy To Kubernetes') {
-      when {
-        allOf {
-          anyOf {
-            branch 'main'
-            branch 'main'
-          }
-          expression { return params.DEPLOY_TO_K8S == true }
-        }
-      }
       steps {
-        withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+        withCredentials([
+          file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG'),
+          usernamePassword(credentialsId: 'docker-registry-credentials', usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_PASSWORD')
+        ]) {
           sh 'kubectl apply -f k8s/namespace.yaml'
+          sh 'kubectl -n opspulse create secret docker-registry registry-pull-secret --docker-server=${REGISTRY} --docker-username="$REGISTRY_USER" --docker-password="$REGISTRY_PASSWORD" --dry-run=client -o yaml | kubectl apply -f -'
           sh 'kubectl apply -f k8s/postgres.yaml'
           sh 'kubectl apply -f k8s/api.yaml'
           sh 'kubectl apply -f k8s/frontend.yaml'
           sh 'kubectl apply -f k8s/prometheus.yaml'
           sh 'kubectl apply -f k8s/grafana.yaml'
+          sh 'kubectl -n opspulse set image deployment/api api=${API_IMAGE}:${IMAGE_TAG}'
+          sh 'kubectl -n opspulse set image deployment/frontend frontend=${FRONTEND_IMAGE}:${IMAGE_TAG}'
+          sh 'kubectl -n opspulse rollout status deployment/api --timeout=180s'
+          sh 'kubectl -n opspulse rollout status deployment/frontend --timeout=180s'
         }
       }
     }

@@ -74,11 +74,25 @@ Set repository variables:
 
 ## Jenkins
 
-The root `Jenkinsfile` runs install, test, build, production dependency audit, Docker image build/push, and optional Kubernetes deploy.
+The root `Jenkinsfile` runs a CI/CD pipeline:
 
-Create these Jenkins credentials before enabling image push or deploy:
+- Install backend and frontend dependencies
+- Run backend and frontend tests
+- Audit production dependencies
+- Build backend and frontend artifacts
+- Build and push Docker images
+- Deploy all Kubernetes manifests
+- Update Kubernetes deployments to the new image tag
+- Wait for rollout status
 
-- `docker-registry-credentials`: username/password for your container registry
+Create these Jenkins credentials:
+
+- `docker-registry-credentials`: username/password or token for your container registry
 - `kubeconfig`: secret file containing your Kubernetes kubeconfig
 
-Set the `REGISTRY` and `IMAGE_NAMESPACE` build parameters for your registry path. The Kubernetes deploy stage is controlled by the `DEPLOY_TO_K8S` boolean parameter.
+Set these Jenkins build parameters:
+
+- `REGISTRY`: for example `ghcr.io/your-github-username` or `docker.io/your-dockerhub-username`
+- `IMAGE_NAMESPACE`: for example `project-codex`
+
+The Jenkins agent must have Node.js, npm, Docker, kubectl, and access to the Docker daemon.
