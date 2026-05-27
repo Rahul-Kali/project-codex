@@ -58,7 +58,7 @@ pipeline {
       when {
         anyOf {
           branch 'main'
-          branch 'master'
+          branch 'main'
         }
       }
       steps {
@@ -71,7 +71,7 @@ pipeline {
       when {
         anyOf {
           branch 'main'
-          branch 'master'
+          branch 'main'
         }
       }
       steps {
@@ -90,7 +90,7 @@ pipeline {
         allOf {
           anyOf {
             branch 'main'
-            branch 'master'
+            branch 'main'
           }
           expression { return params.DEPLOY_TO_K8S == true }
         }
