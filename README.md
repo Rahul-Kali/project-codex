@@ -72,3 +72,13 @@ Set repository variables:
 - `REGISTRY`, for example `ghcr.io/your-org`
 - `IMAGE_NAMESPACE`, for example `opspulse`
 
+## Jenkins
+
+The root `Jenkinsfile` runs install, test, build, production dependency audit, Docker image build/push, and optional Kubernetes deploy.
+
+Create these Jenkins credentials before enabling image push or deploy:
+
+- `docker-registry-credentials`: username/password for your container registry
+- `kubeconfig`: secret file containing your Kubernetes kubeconfig
+
+Set the `REGISTRY` and `IMAGE_NAMESPACE` build parameters for your registry path. The Kubernetes deploy stage is controlled by the `DEPLOY_TO_K8S` boolean parameter.
