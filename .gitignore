@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+.env
+.DS_Store
+*.log
+backend/node_modules/
+frontend/node_modules/
+backend/coverage/
+frontend/dist/
+postgres-data/
+build/
+target/
+__pycache__/
+*.class
+.vscode/

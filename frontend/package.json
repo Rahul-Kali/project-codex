@@ -1,0 +1,23 @@
+{
+  "name": "@opspulse/frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "lint": "eslint src --ext js,jsx",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^6.0.2",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite": "^8.0.14"
+  },
+  "devDependencies": {
+    "eslint": "^9.9.0",
+    "vitest": "^4.1.7"
+  }
+}
