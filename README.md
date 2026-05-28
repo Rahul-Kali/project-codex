@@ -28,6 +28,13 @@ Services:
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3001
 
+Jenkins uses `docker-compose.ci.yml` during the Docker Compose test to avoid port conflicts with Jenkins:
+
+- Frontend: http://localhost:18080
+- API: http://localhost:13000
+- Prometheus: http://localhost:19090
+- Grafana: http://localhost:13001
+
 Grafana login:
 
 - Username: `admin`

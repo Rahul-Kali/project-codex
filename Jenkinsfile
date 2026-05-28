@@ -34,19 +34,44 @@ pipeline {
 
     stage('Docker Compose Test') {
       steps {
-        sh 'docker compose down'
-        sh 'docker compose up --build'
-        sh 'docker compose ps'
-        sh 'docker compose logs --tail=50'
-        sh 'sleep 20'
-        sh 'curl --fail http://localhost:3000/healthz'
-        sh 'curl --fail http://localhost:3000/readyz'
-        sh 'curl --fail http://localhost:8080'
+        sh 'API_PORT=13000 FRONTEND_PORT=18080 PROMETHEUS_PORT=19090 GRAFANA_PORT=13001 docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v --remove-orphans'
+        sh 'API_PORT=13000 FRONTEND_PORT=18080 PROMETHEUS_PORT=19090 GRAFANA_PORT=13001 docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build'
+        sh 'API_PORT=13000 FRONTEND_PORT=18080 PROMETHEUS_PORT=19090 GRAFANA_PORT=13001 docker compose -f docker-compose.yml -f docker-compose.ci.yml ps'
+        sh '''
+          for i in $(seq 1 30); do
+            if curl --fail http://localhost:13000/healthz; then
+              exit 0
+            fi
+            sleep 2
+          done
+          API_PORT=13000 FRONTEND_PORT=18080 PROMETHEUS_PORT=19090 GRAFANA_PORT=13001 docker compose -f docker-compose.yml -f docker-compose.ci.yml logs api
+          exit 1
+        '''
+        sh '''
+          for i in $(seq 1 30); do
+            if curl --fail http://localhost:13000/readyz; then
+              exit 0
+            fi
+            sleep 2
+          done
+          API_PORT=13000 FRONTEND_PORT=18080 PROMETHEUS_PORT=19090 GRAFANA_PORT=13001 docker compose -f docker-compose.yml -f docker-compose.ci.yml logs api postgres
+          exit 1
+        '''
+        sh '''
+          for i in $(seq 1 30); do
+            if curl --fail http://localhost:18080; then
+              exit 0
+            fi
+            sleep 2
+          done
+          API_PORT=13000 FRONTEND_PORT=18080 PROMETHEUS_PORT=19090 GRAFANA_PORT=13001 docker compose -f docker-compose.yml -f docker-compose.ci.yml logs frontend
+          exit 1
+        '''
       }
       post {
         always {
-          sh 'docker compose down'
-          sh 'docker compose logs api'
+          sh 'API_PORT=13000 FRONTEND_PORT=18080 PROMETHEUS_PORT=19090 GRAFANA_PORT=13001 docker compose -f docker-compose.yml -f docker-compose.ci.yml logs --tail=100 || true'
+          sh 'API_PORT=13000 FRONTEND_PORT=18080 PROMETHEUS_PORT=19090 GRAFANA_PORT=13001 docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v --remove-orphans || true'
         }
       }
     }
@@ -95,4 +120,3 @@ pipeline {
     }
   }
 }
-
