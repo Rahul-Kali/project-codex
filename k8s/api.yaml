@@ -17,12 +17,10 @@ spec:
         prometheus.io/path: "/metrics"
         prometheus.io/port: "3000"
     spec:
-      imagePullSecrets:
-        - name: registry-pull-secret
       containers:
         - name: api
-          image: ghcr.io/your-org/opspulse-api:latest
-          imagePullPolicy: Always
+          image: opspulse-api:jenkins
+          imagePullPolicy: IfNotPresent
           env:
             - name: PORT
               value: "3000"
