@@ -34,7 +34,10 @@ pipeline {
 
     stage('Docker Compose Test') {
       steps {
-        sh 'docker compose up -d --build'
+        sh 'docker compose down'
+        sh 'docker compose up --build'
+        sh 'docker compose ps'
+        sh 'docker compose logs --tail=50'
         sh 'sleep 20'
         sh 'curl --fail http://localhost:3000/healthz'
         sh 'curl --fail http://localhost:3000/readyz'
@@ -42,7 +45,8 @@ pipeline {
       }
       post {
         always {
-          sh 'docker compose down '
+          sh 'docker compose down'
+          sh 'docker compose logs api'
         }
       }
     }

@@ -1,34 +1,19 @@
 services:
   postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: opspulse
-      POSTGRES_USER: opspulse
-      POSTGRES_PASSWORD: opspulse
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./database/init:/docker-entrypoint-initdb.d:ro
+    image: postgres:15
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U opspulse -d opspulse"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
       timeout: 5s
       retries: 5
 
   api:
-    build: ./backend
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      DATABASE_URL: postgres://opspulse:opspulse@postgres:5432/opspulse
-      CORS_ORIGIN: http://localhost:8080
-    ports:
-      - "3000:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-
+  depends_on:
+    postgres:
+      condition: service_healthy
+  api:
+  build: ./backend
+  restart: unless-stopped
   frontend:
     build:
       context: ./frontend
@@ -62,7 +47,7 @@ services:
       - "3001:3000"
     depends_on:
       - prometheus
-
+  restart: unless-stopped
 volumes:
   postgres-data:
 
